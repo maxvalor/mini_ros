@@ -18,26 +18,41 @@ namespace mini_ros {
   class ModuleHandler;
 
   class Publisher {
-    std::function<void(Message* msg)> f;
+    std::function<void(Message*)> f;
+    std::function<void(std::shared_ptr<Message>)> f_sp;
+    friend class ModuleHandler;
+
+    Publisher(std::function<void(Message* msg)> f,
+        std::function<void(std::shared_ptr<Message>)> f_sp) : f(f), f_sp(f_sp) {}
   public:
-    Publisher(std::function<void(Message* msg)> f) : f(f) {
-    }
+    Publisher() : f(nullptr), f_sp(nullptr) {}
     template <typename T>
     void publish(T& msg) {
-      T* pMsg = &msg;
-      f(static_cast<Message*>(pMsg));
+      if (f != nullptr) {
+        f(&msg);
+      }
+    }
+
+    template <typename T>
+    void publish(std::shared_ptr<T> msg) {
+      if (f_sp != nullptr) {
+        f_sp(msg);
+      }
     }
   };
 
   //template <typename T>
   class Subscriber {
     std::function<void(void)> f;
-  public:
-    Subscriber() {}
-    Subscriber(std::function<void(void)> f) : f(f) {}
+    friend class ModuleHandler;
 
+    Subscriber(std::function<void(void)> f) : f(f) {}
+  public:
+    Subscriber() : f(nullptr) {}
     void shutdown() {
-      f();
+      if (f != nullptr ) {
+        f();
+      }
     }
   };
 
@@ -76,12 +91,9 @@ namespace mini_ros {
       size_t index;
       try {
         auto& funcs = topic_callbacks.at(topic);
-        //std::cout << "func size:" << funcs.size() << std::endl;
         function_pair fp = {packed_f, true};
         funcs.push_back(fp);
         index = funcs.size() - 1;
-        // topic_callbacks.insert(
-        //   std::pair<std::string, func_vector>(topic, funcs));
       }
       catch (std::out_of_range e) {
         func_vector funcs;
@@ -100,7 +112,7 @@ namespace mini_ros {
         }
         catch (std::out_of_range e) {
           // do nothing.
-          std::cout << "error" << std::endl;
+          std::cout << "no subscriber" << std::endl;
         }
       };
 
@@ -112,27 +124,45 @@ namespace mini_ros {
       auto publish_f = [this, topic](Message* msg){
         try {
           auto funcs = topic_callbacks.at(topic);
-          T* n_msg = static_cast<T*>(msg);
-          T* pMsg = new T();
-          memcpy(pMsg, n_msg, sizeof(T));
-          std::shared_ptr<Message> sMsg(dynamic_cast<Message*>(pMsg));
+          msg = new T(std::move(*dynamic_cast<T*>(msg)));
+          std::shared_ptr<Message> sMsg(msg);
           for (auto fp : funcs) {
-              std::thread t = std::thread([fp, sMsg](){
-                if (fp.enable) {
-                    fp.f(sMsg);
-                }
-              });
-              t.detach();
-              // 为了限制线程数据，也可以使用线程池来进行一定的控制。
+            std::thread t = std::thread([fp, sMsg](){
+              if (fp.enable) {
+                  fp.f(sMsg);
+              }
+            });
+            t.detach();
+            // 为了限制线程数据，也可以使用线程池来进行一定的控制。
           }
         }
         catch (std::out_of_range e) {
           // do nothing.
-          std::cout << "error" << std::endl;
+          std::cout << "no subscriber" << std::endl;
         }
       };
 
-      return Publisher(publish_f);
+      auto publish_sp_f = [this, topic](std::shared_ptr<Message> msg){
+        try {
+          auto funcs = topic_callbacks.at(topic);
+          std::shared_ptr<T> sMsg = std::static_pointer_cast<T>(msg);
+          for (auto fp : funcs) {
+            std::thread t = std::thread([fp, sMsg](){
+              if (fp.enable) {
+                  fp.f(sMsg);
+              }
+            });
+            t.detach();
+            // 为了限制线程数据，也可以使用线程池来进行一定的控制。
+          }
+        }
+        catch (std::out_of_range e) {
+          // do nothing.
+          std::cout << "no subscriber" << std::endl;
+        }
+      };
+
+      return Publisher(publish_f, publish_sp_f);
     }
 
   };

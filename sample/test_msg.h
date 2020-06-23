@@ -3,10 +3,26 @@
 #include "message.h"
 #include "tool.h"
 struct TestMsg : public mini_ros::Message {
-  std::uint32_t data;
+  std::uint32_t* data;
+  size_t len;
+
+  TestMsg() : data(nullptr) {}
+
+  TestMsg(TestMsg&& t) {
+    data = t.data;
+    t.data = nullptr;
+    len = t.len;
+  }
+
   virtual ~TestMsg() {
     // std::cout << "~TestMsg, data:" << data << std::endl;
-    print("~TestMsg, data:", data);
+    if (data != nullptr) {
+      print("~TestMsg, data:", data[0]);
+      delete[] data;
+    }
+    else {
+      print("~TestMsg, no data.", 0);
+    }
   }
 };
 #endif

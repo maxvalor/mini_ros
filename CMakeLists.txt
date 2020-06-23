@@ -17,6 +17,10 @@ add_executable(aaa
   sample/test.cpp
 )
 
+add_executable(bbb
+  sample/test2.cpp
+)
+
 target_link_libraries(mini_ros_sample
   pthread
 )
