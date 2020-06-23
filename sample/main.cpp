@@ -2,20 +2,24 @@
 #include "test_msg.h"
 #include <thread>
 #include <iostream>
+#include "tool.h"
 
 static int c;
 mini_ros::Subscriber<TestMsg> sub;
 
 void on_msg(std::shared_ptr<TestMsg> msg) {
-  std::cout << "1:received " << msg->data << std::endl;
+  //std::cout << "1:received " << msg->data << std::endl;
+  print("1:received ", msg->data);
 }
 
 void on_msg2(std::shared_ptr<TestMsg> msg) {
-  std::cout << "2:received " << msg->data << std::endl;
+  // std::cout << "2:received " << msg->data << std::endl;
+  print("2:received ", msg->data);
 }
 
 void on_msg3(std::shared_ptr<TestMsg> msg) {
-  std::cout << "3:received " << msg->data << std::endl;
+  // std::cout << "3:received " << msg->data << std::endl;
+  print("3:received ", msg->data);
   if (msg->data == 5) {
     sub.shutdown();
   }

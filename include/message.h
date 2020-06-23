@@ -6,6 +6,8 @@ namespace mini_ros {
       std::uint32_t id;
       std::uint32_t timestamp;
     } header;
+
+    virtual ~Message() {}
   };
 }
 #endif

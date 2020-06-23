@@ -1,9 +1,13 @@
 #ifndef TEST_MSG_H_
 #define TEST_MSG_H_
 #include "message.h"
-#include <iostream>
+#include "tool.h"
 struct TestMsg : public mini_ros::Message {
   std::uint32_t data;
-  ~TestMsg() { std::cout << "~TestMsg" << std::endl; }
+  int tag;
+  virtual ~TestMsg() {
+    // std::cout << "~TestMsg, data:" << data << std::endl;
+    print("~TestMsg, data:", tag);
+  }
 };
 #endif

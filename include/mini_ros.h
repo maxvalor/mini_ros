@@ -34,7 +34,11 @@ namespace mini_ros {
   class Publisher;
 
   class ModuleHandler {
-    using func_vector = std::vector<std::function<void(std::shared_ptr<Message>)>>;
+    struct function_pair {
+      std::function<void(std::shared_ptr<Message>)> f;
+      bool enable;
+    };
+    using func_vector = std::vector<function_pair>;
     std::map<std::string, func_vector> topic_callbacks;
     static ModuleHandler* singleton;
 
@@ -65,14 +69,16 @@ namespace mini_ros {
       try {
         auto& funcs = topic_callbacks.at(topic);
         //std::cout << "func size:" << funcs.size() << std::endl;
-        funcs.push_back(packed_f);
+        function_pair fp = {packed_f, true};
+        funcs.push_back(fp);
         index = funcs.size() - 1;
         // topic_callbacks.insert(
         //   std::pair<std::string, func_vector>(topic, funcs));
       }
       catch (std::out_of_range e) {
         func_vector funcs;
-        funcs.push_back(packed_f);
+        function_pair fp = {packed_f, true};
+        funcs.push_back(fp);
         index = funcs.size() - 1;
         topic_callbacks.insert(
           std::pair<std::string, func_vector>(topic, funcs));
@@ -88,18 +94,17 @@ namespace mini_ros {
     template <typename T>
     void publish(std::string topic, T& msg) {
       try {
-        // std::cout << "a1" << std::endl;
         auto funcs = topic_callbacks.at(topic);
-        // std::cout << "a2" << std::endl;
         T* pMsg = new T();
         memcpy(pMsg, &msg, sizeof(T));
         std::shared_ptr<Message> sMsg(dynamic_cast<Message*>(pMsg));
-        for (auto f : funcs) {
-            // std::thread([f, sMsg](){
-            //   f(sMsg);
-            // });
-            f(sMsg);
-            // std::cout << "a4" << std::endl;
+        for (auto fp : funcs) {
+            std::thread t = std::thread([fp, sMsg](){
+              if (fp.enable) {
+                  fp.f(sMsg);
+              }
+            });
+            t.detach();
             // 为了限制线程数据，也可以使用线程池来进行一定的控制。
         }
       }
@@ -117,7 +122,8 @@ namespace mini_ros {
     bool remove(std::string topic, std::uint32_t index) {
       try {
         auto &funcs = topic_callbacks.at(topic);
-        funcs.erase(funcs.begin() + index);
+        //funcs.erase(funcs.begin() + index);
+        funcs[index].enable = false;
       }
       catch (std::out_of_range e) {
         // do nothing.
