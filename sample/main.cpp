@@ -5,7 +5,7 @@
 #include "tool.h"
 
 static int c;
-mini_ros::Subscriber<TestMsg> sub;
+mini_ros::Subscriber sub;
 
 void on_msg(std::shared_ptr<TestMsg> msg) {
   //std::cout << "1:received " << msg->data << std::endl;
@@ -32,7 +32,7 @@ int main() {
   sub = mh.subscribe<TestMsg>("test", on_msg3);
   std::thread t([&mh](){
     int i = 10;
-    mini_ros::Publisher<TestMsg> pub = mh.advertise<TestMsg>("test");
+    mini_ros::Publisher pub = mh.advertise<TestMsg>("test");
     while (i--) {
       TestMsg msg;
       msg.data = i;

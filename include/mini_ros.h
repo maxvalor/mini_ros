@@ -14,24 +14,32 @@
 #include <iostream>
 
 namespace mini_ros {
-  //
-  // class Subscriber {
-  //   std::string topic;
-  //   const ;
-  //
-  // public:
-  //   Subscriber() {}
-  //   ~Subscriber() {}
-  //   Subscriber(std::string topic, const std::type_info &nInfo) : topic(topic), nInfo(nInfo) {}
-  //   bool shutdown() {
-  //     ModuleHandler& mh = ModuleHandler::instance();
-  //     mh.remove(topic, nInfo);
-  //   }
-  // };
-  template <typename T>
-  class Subscriber;
-  template <typename T>
-  class Publisher;
+
+  class ModuleHandler;
+
+  class Publisher {
+    std::function<void(Message* msg)> f;
+  public:
+    Publisher(std::function<void(Message* msg)> f) : f(f) {
+    }
+    template <typename T>
+    void publish(T& msg) {
+      T* pMsg = &msg;
+      f(static_cast<Message*>(pMsg));
+    }
+  };
+
+  //template <typename T>
+  class Subscriber {
+    std::function<void(void)> f;
+  public:
+    Subscriber() {}
+    Subscriber(std::function<void(void)> f) : f(f) {}
+
+    void shutdown() {
+      f();
+    }
+  };
 
   class ModuleHandler {
     struct function_pair {
@@ -60,7 +68,7 @@ namespace mini_ros {
     }
 
     template <typename T>
-    Subscriber<T> subscribe(std::string topic, std::function<void(std::shared_ptr<T> msg)> f) {
+    Subscriber subscribe(std::string topic, std::function<void(std::shared_ptr<T> msg)> f) {
       auto packed_f = [f](std::shared_ptr<Message> msg){
         f(std::static_pointer_cast<T>(msg));
       };
@@ -85,78 +93,48 @@ namespace mini_ros {
       }
 
       auto shutdown_f = [this, index, topic] {
-        remove(topic, index);
+        try {
+          auto &funcs = topic_callbacks.at(topic);
+          //funcs.erase(funcs.begin() + index);
+          funcs[index].enable = false;
+        }
+        catch (std::out_of_range e) {
+          // do nothing.
+          std::cout << "error" << std::endl;
+        }
       };
 
-      return Subscriber<T>(shutdown_f);
+      return Subscriber(shutdown_f);
     }
 
     template <typename T>
-    void publish(std::string topic, T& msg) {
-      try {
-        auto funcs = topic_callbacks.at(topic);
-        T* pMsg = new T();
-        memcpy(pMsg, &msg, sizeof(T));
-        std::shared_ptr<Message> sMsg(dynamic_cast<Message*>(pMsg));
-        for (auto fp : funcs) {
-            std::thread t = std::thread([fp, sMsg](){
-              if (fp.enable) {
-                  fp.f(sMsg);
-              }
-            });
-            t.detach();
-            // 为了限制线程数据，也可以使用线程池来进行一定的控制。
+    Publisher advertise(std::string topic) {
+      auto publish_f = [this, topic](Message* msg){
+        try {
+          auto funcs = topic_callbacks.at(topic);
+          T* n_msg = static_cast<T*>(msg);
+          T* pMsg = new T();
+          memcpy(pMsg, n_msg, sizeof(T));
+          std::shared_ptr<Message> sMsg(dynamic_cast<Message*>(pMsg));
+          for (auto fp : funcs) {
+              std::thread t = std::thread([fp, sMsg](){
+                if (fp.enable) {
+                    fp.f(sMsg);
+                }
+              });
+              t.detach();
+              // 为了限制线程数据，也可以使用线程池来进行一定的控制。
+          }
         }
-      }
-      catch (std::out_of_range e) {
-        // do nothing.
-        std::cout << "error" << std::endl;
-      }
+        catch (std::out_of_range e) {
+          // do nothing.
+          std::cout << "error" << std::endl;
+        }
+      };
+
+      return Publisher(publish_f);
     }
 
-    template <typename T>
-    Publisher<T> advertise(std::string topic) {
-      return Publisher<T>(topic);
-    }
-
-    bool remove(std::string topic, std::uint32_t index) {
-      try {
-        auto &funcs = topic_callbacks.at(topic);
-        //funcs.erase(funcs.begin() + index);
-        funcs[index].enable = false;
-      }
-      catch (std::out_of_range e) {
-        // do nothing.
-        std::cout << "error" << std::endl;
-      }
-    }
-
-  };
-
-  template <typename T>
-  class Publisher {
-    //ModuleHandler &mh;
-    std::string topic;
-
-  public:
-    Publisher(std::string topic) : topic(topic) {
-      //mh = std::ref(mini_ros::ModuleHandler::instance());
-    }
-    void publish(T& msg) {
-      ModuleHandler::instance().publish<T>(topic, msg);
-    }
-  };
-
-  template <typename T>
-  class Subscriber {
-    std::function<void(void)> f;
-  public:
-    Subscriber() {}
-    Subscriber(std::function<void(void)> f) : f(f) {}
-
-    void shutdown() {
-      f();
-    }
   };
 
   ModuleHandler* ModuleHandler::singleton = nullptr;

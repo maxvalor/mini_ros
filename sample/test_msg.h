@@ -4,10 +4,9 @@
 #include "tool.h"
 struct TestMsg : public mini_ros::Message {
   std::uint32_t data;
-  int tag;
   virtual ~TestMsg() {
     // std::cout << "~TestMsg, data:" << data << std::endl;
-    print("~TestMsg, data:", tag);
+    print("~TestMsg, data:", data);
   }
 };
 #endif
