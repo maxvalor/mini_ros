@@ -9,7 +9,8 @@
 #include <cstring>
 #include <future>
 #include <typeinfo>
-#include "message.h"
+#include <unistd.h>
+#include "message_queue.h"
 
 #include <iostream>
 
@@ -18,12 +19,13 @@ namespace mini_ros {
   class ModuleHandler;
 
   class Publisher {
-    std::function<void(Message*)> f;
-    std::function<void(std::shared_ptr<Message>)> f_sp;
+    using pub_func = std::function<void(Message*)>;
+    using pub_func_sp = std::function<void(std::shared_ptr<Message>)>;
+    pub_func f;
+    pub_func_sp f_sp;
     friend class ModuleHandler;
 
-    Publisher(std::function<void(Message* msg)> f,
-        std::function<void(std::shared_ptr<Message>)> f_sp) : f(f), f_sp(f_sp) {}
+    Publisher(pub_func f, pub_func_sp f_sp) : f(f), f_sp(f_sp) {}
   public:
     Publisher() : f(nullptr), f_sp(nullptr) {}
     template <typename T>
@@ -56,6 +58,9 @@ namespace mini_ros {
     }
   };
 
+  // class ServiceServer {};
+  // class ServerClient {};
+
   class ModuleHandler {
     struct function_pair {
       std::function<void(std::shared_ptr<Message>)> f;
@@ -63,9 +68,36 @@ namespace mini_ros {
     };
     using func_vector = std::vector<function_pair>;
     std::map<std::string, func_vector> topic_callbacks;
+    MessageQueue msg_queue;
     static ModuleHandler* singleton;
 
-    ModuleHandler() {}
+    ModuleHandler() {
+
+      std::thread deliver_t = std::thread([this](){
+        while (1) {
+          if (!msg_queue.empty()) {
+            MessageQueue::MessagePair pair = msg_queue.front();
+            auto& funcs = topic_callbacks.at(pair.first);
+            std::shared_ptr<Message> sMsg = pair.second;
+            for (auto fp : funcs) {
+              std::thread t = std::thread([fp, sMsg](){
+                if (fp.enable) {
+                    fp.f(sMsg);
+                }
+              });
+              t.detach();
+              // 为了限制线程数据，也可以使用线程池来进行一定的控制。
+            }
+            msg_queue.pop();
+          }
+          else {
+            msg_queue.wait();
+          }
+        }
+      });
+
+      deliver_t.detach();
+    }
 
   public:
     static ModuleHandler& instance() {
@@ -126,15 +158,9 @@ namespace mini_ros {
           auto funcs = topic_callbacks.at(topic);
           msg = new T(std::move(*dynamic_cast<T*>(msg)));
           std::shared_ptr<Message> sMsg(msg);
-          for (auto fp : funcs) {
-            std::thread t = std::thread([fp, sMsg](){
-              if (fp.enable) {
-                  fp.f(sMsg);
-              }
-            });
-            t.detach();
-            // 为了限制线程数据，也可以使用线程池来进行一定的控制。
-          }
+          MessageQueue::MessagePair p(topic, sMsg);
+          msg_queue.push(p);
+          msg_queue.notify();
         }
         catch (std::out_of_range e) {
           // do nothing.
@@ -146,15 +172,9 @@ namespace mini_ros {
         try {
           auto funcs = topic_callbacks.at(topic);
           std::shared_ptr<T> sMsg = std::static_pointer_cast<T>(msg);
-          for (auto fp : funcs) {
-            std::thread t = std::thread([fp, sMsg](){
-              if (fp.enable) {
-                  fp.f(sMsg);
-              }
-            });
-            t.detach();
-            // 为了限制线程数据，也可以使用线程池来进行一定的控制。
-          }
+          MessageQueue::MessagePair p(topic, sMsg);
+          msg_queue.push(p);
+          msg_queue.notify();
         }
         catch (std::out_of_range e) {
           // do nothing.
@@ -164,6 +184,14 @@ namespace mini_ros {
 
       return Publisher(publish_f, publish_sp_f);
     }
+    //
+    // template <typename T>
+    // ServiceServer advertiseService(std::string name,
+    //   std::function<void(std::shared_ptr<typename T::Request>,
+    //     std::shared_ptr<typename T::Response>)> f) {
+    //
+    //   return ServiceServer();
+    // }
 
   };
 
