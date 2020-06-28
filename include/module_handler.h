@@ -2,6 +2,7 @@
 #define MODULE_HANDLER_H_
 
 #include <thread>
+#include <assert.h>
 #include "message_queue.h"
 #include "core.h"
 #include "subscriber.h"
@@ -21,6 +22,8 @@ private:
   MessageQueue recv_msg_queue;
   MessageQueue send_msg_queue;
   bool running;
+  std::thread::id tid;
+
 public:
   ModuleHandler()
   {
@@ -39,8 +42,8 @@ public:
 
     deliver_t.detach();
 
-    std::thread::id tid = std::this_thread::get_id();
-    auto push_back = [this](MessageQueue::MessagePair &msg)
+    tid = std::this_thread::get_id();
+    auto push_back = [this](MessageQueue::MessagePair msg)
     {
       recv_msg_queue.push(msg);
       recv_msg_queue.notify();
@@ -52,6 +55,7 @@ public:
 
   void spin()
   {
+    assert(tid == std::this_thread::get_id());
     running = true;
     while (running)
     {
@@ -83,10 +87,12 @@ public:
 
   template <typename T>
   Subscriber subscribe(std::string topic, std::function<void(std::shared_ptr<T> msg)> f) {
+
     auto packed_f = [f](std::shared_ptr<Message> msg)
     {
       f(std::static_pointer_cast<T>(msg));
     };
+
     //std::cout << typeid(packed_f).name() << std::endl;
     size_t index;
     try

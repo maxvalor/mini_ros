@@ -15,7 +15,7 @@ std::mutex mtx;
 class Core {
 private:
   std::map<std::thread::id,
-    std::function<void(MessageQueue::MessagePair&)>> push_backs;
+    std::function<void(MessageQueue::MessagePair)>> push_backs;
 
   std::map<std::string, std::list<std::thread::id>> subscribers;
 
@@ -40,27 +40,29 @@ public:
   virtual ~Core () {}
 
   void register_handler(std::thread::id tid,
-    std::function<void(MessageQueue::MessagePair&)> f)
+    std::function<void(MessageQueue::MessagePair)> f)
   {
     rmtx.lock();
     push_backs.insert(std::pair<std::thread::id,
-      std::function<void(MessageQueue::MessagePair&)>>(tid, f));
+      std::function<void(MessageQueue::MessagePair)>>(tid, f));
 
     std::cout << "register_handler:" << tid << std::endl;
     rmtx.unlock();
   }
 
-  void subscribe(std::thread::id tid, std::string& topic)
+  void subscribe(std::thread::id tid, std::string topic)
   {
     size_t index;
     try {
       auto& thread_ids = subscribers.at(topic);
-      try {
-        thread_ids.push_back(tid);
+      for (auto id : thread_ids)
+      {
+        if (id == tid)
+        {
+          return;
+        }
       }
-      catch (std::out_of_range e) {
-        // do nothing
-      }
+      thread_ids.push_back(tid);
     }
     catch (std::out_of_range e) {
       std::list<std::thread::id> thread_ids;
@@ -70,7 +72,7 @@ public:
     }
   }
 
-  void deliver(MessageQueue::MessagePair& msg)
+  void deliver(MessageQueue::MessagePair msg)
   {
     try {
       auto& tids = subscribers.at(msg.first);
