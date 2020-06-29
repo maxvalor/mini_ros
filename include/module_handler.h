@@ -3,10 +3,15 @@
 
 #include <thread>
 #include <assert.h>
+#include <future>
+#include <chrono>
 #include "message_queue.h"
 #include "core.h"
 #include "subscriber.h"
 #include "publisher.h"
+#include "service_server.h"
+#include "service_client.h"
+#include "service.h"
 
 namespace mini_ros {
 
@@ -18,6 +23,11 @@ private:
   };
   using func_vector = std::vector<function_pair>;
   std::map<std::string, func_vector> topic_callbacks;
+  struct service_pair {
+    std::function<bool(std::shared_ptr<Service>)> f;
+    bool enable;
+  };
+  std::map<std::string, service_pair> service_funcs;
 
   MessageQueue recv_msg_queue;
   MessageQueue send_msg_queue;
@@ -86,7 +96,7 @@ public:
   }
 
   template <typename T>
-  Subscriber subscribe(std::string topic, std::function<void(std::shared_ptr<T> msg)> f) {
+  Subscriber subscribe(std::string topic, std::function<void(std::shared_ptr<T>)> f) {
 
     auto packed_f = [f](std::shared_ptr<Message> msg)
     {
@@ -150,6 +160,138 @@ public:
     };
 
     return Publisher(publish_f, publish_sp_f);
+  }
+
+  template <typename T>
+  ServiceServer advertiseService(std::string srv_name,
+    std::function<bool(std::shared_ptr<T>)> f, bool sync = false)
+  {
+    if (sync)
+    {
+      std::shared_ptr<std::mutex> pmtx = std::make_shared<std::mutex>();
+      auto sync_f = [f, pmtx](std::shared_ptr<T> srv)
+      {
+        bool rlt;
+        pmtx->lock();
+        rlt = f(srv);
+        pmtx->unlock();
+        return rlt;
+      };
+
+      f = sync_f;
+    }
+
+    auto packed_f = [f](std::shared_ptr<Service> srv){
+      std::shared_ptr<T> t_srv = std::static_pointer_cast<T>(srv);
+      return f(t_srv);
+    };
+
+    size_t index;
+    // try
+    // {
+    //   auto& funcs = service_funcs.at(srv_name);
+    //   service_pair fp = {packed_f, true};
+    //   funcs.push_back(fp);
+    //   index = funcs.size() - 1;
+    // }
+    // catch (std::out_of_range e)
+    // {
+    //   srv_vector funcs;
+    //   service_pair fp = {packed_f, true};
+    //   funcs.push_back(fp);
+    //   index = funcs.size() - 1;
+    //   service_funcs.insert(
+    //     std::pair<std::string, srv_vector>(srv_name, funcs));
+    // }
+
+    //service_pair sp = {packed_f, true};
+    Core::instance().register_service(srv_name, packed_f);
+
+    std::cout << "succeed in inserting." << service_funcs.size() << std::endl;
+
+    auto shutdown_f = [this, srv_name]
+    {
+      // try
+      // {
+      //   auto &sp = service_funcs.at(srv_name);
+      //   //funcs.erase(funcs.begin() + index);
+      //   sp.enable = false;
+      // }
+      // catch (std::out_of_range e)
+      // {
+      //   // do nothing.
+      // }
+    };
+
+    return ServiceServer(shutdown_f);
+  }
+
+  template <typename T>
+  ServiceClient serviceClient(std::string srv_name, std::uint32_t timeout_ms = 0)
+  {
+    auto call = [srv_name, timeout_ms](Service* origin_srv)
+    {
+      Service* osrv = dynamic_cast<Service*>(new T(std::move(*static_cast<T*>(origin_srv))));
+      std::shared_ptr<Service> srv(osrv);
+      if (timeout_ms > 0)
+      {
+        std::future<bool> result = std::async([srv_name, origin_srv, srv](){
+          bool rlt = Core::instance().call_service(srv_name, srv);
+          std::shared_ptr<T> t_srv = std::static_pointer_cast<T>(srv);
+          static_cast<T*>(origin_srv)->resp = t_srv->resp;
+          return rlt;
+        });
+        try
+        {
+          std::chrono::system_clock::time_point two_seconds_passed
+              = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms);
+          result.wait_until(two_seconds_passed);
+          return result.get();
+        }
+        catch (...)
+        {
+            std::cout << "get error....\n ";
+        }
+      }
+      else
+      {
+        bool rlt = Core::instance().call_service(srv_name, srv);
+        std::shared_ptr<T> t_srv = std::static_pointer_cast<T>(srv);
+        static_cast<T*>(origin_srv)->resp = t_srv->resp;
+        return rlt;
+      }
+
+      return false;
+    };
+
+    auto call_sp = [srv_name, timeout_ms](std::shared_ptr<Service> srv)
+    {
+      if (timeout_ms > 0)
+      {
+        std::future<bool> result = std::async([srv_name, srv](){
+          return Core::instance().call_service(srv_name, srv);
+        });
+        try
+        {
+          std::chrono::system_clock::time_point two_seconds_passed
+              = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout_ms);
+          result.wait_until(two_seconds_passed);
+          return result.get();
+        }
+        catch (...)
+        {
+            std::cout << "get error....\n ";
+        }
+      }
+      else
+      {
+        return Core::instance().call_service(srv_name, srv);
+      }
+
+      return false;
+    };
+
+    return ServiceClient(call, call_sp);
   }
 };
 

@@ -5,12 +5,13 @@
 #include <map>
 #include <list>
 #include "message_queue.h"
+#include "service.h"
 
 #include <iostream>
 
 namespace mini_ros {
 
-std::mutex mtx;
+
 
 class Core {
 private:
@@ -18,6 +19,7 @@ private:
     std::function<void(MessageQueue::MessagePair)>> push_backs;
 
   std::map<std::string, std::list<std::thread::id>> subscribers;
+  std::map<std::string, std::function<bool(std::shared_ptr<Service>)>> services;
 
   static Core *singleton;
   std::mutex rmtx;
@@ -26,7 +28,7 @@ private:
 public:
 
   static Core& instance() {
-
+    static std::mutex mtx;
     if (singleton == nullptr) {
       mtx.lock();
       if (singleton == nullptr) {
@@ -90,6 +92,29 @@ public:
     catch (std::out_of_range e) {
       std::cout << "no subscriber" << std::endl;
     }
+  }
+
+  void register_service(std::string srv_name,
+    std::function<bool(std::shared_ptr<Service>)> f)
+  {
+    services.insert(std::pair<std::string,
+        std::function<bool(std::shared_ptr<Service>)>>(srv_name, f));
+  }
+
+  bool call_service(std::string srv_name,
+    std::shared_ptr<Service> srv)
+  {
+    try
+    {
+      auto& f = services.at(srv_name);
+      std::cout << "service found" << std::endl;
+      return f(srv);
+    }
+    catch (std::out_of_range e)
+    {
+      std::cout << "no service" << std::endl;
+    }
+    return false;
   }
 };
 
