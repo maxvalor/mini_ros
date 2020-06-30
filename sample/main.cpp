@@ -7,21 +7,21 @@
 std::mutex print_mtx;
 
 void on_msg(std::shared_ptr<TestMsg> msg) {
-  print_mtx.lock();
+  // print_mtx.lock();
   std::cout << std::this_thread::get_id() << " received "  << msg->data[0] << std::endl;
-  print_mtx.unlock();
+  // print_mtx.unlock();
 }
 
 void on_msg1(std::shared_ptr<TestMsg> msg) {
-  print_mtx.lock();
+  // print_mtx.lock();
   std::cout << std::this_thread::get_id() << " received1 "  << msg->data[0] << std::endl;
-  print_mtx.unlock();
+  // print_mtx.unlock();
 }
 
 void on_msg2(std::shared_ptr<TestMsg2> msg) {
-  print_mtx.lock();
+  // print_mtx.lock();
   std::cout << std::this_thread::get_id() << " received2 "  << msg->data << std::endl;
-  print_mtx.unlock();
+  // print_mtx.unlock();
 }
 
 bool test_srv(std::shared_ptr<TestSrv> srv)
@@ -49,9 +49,9 @@ int main() {
       msg2->data = new std::uint32_t[1];
       msg2->data[0] = i;
       std::shared_ptr<TestMsg> s_msg2(msg2);
-      print_mtx.lock();
+      // print_mtx.lock();
       std::cout << "publish test:" << msg2->data[0] << std::endl;
-      print_mtx.unlock();
+      // print_mtx.unlock();
       //mh.publish<TestMsg>("test", msg);
       pub.publish(s_msg2);
     }
@@ -77,24 +77,32 @@ int main() {
       }
       else
       {
+        // print_mtx.lock();
         std::cout << "error " << std::endl;
+        // print_mtx.unlock();
       }
+      // print_mtx.lock();
       std::cout << "publish test2:" << msg.data << std::endl;
+      // print_mtx.unlock();
       //mh.publish<TestMsg>("test", msg);
       pub.publish(msg);
 
       TestSrv srv2;
 
       srv2.req.data = i + 1000;
-      if (client.call(srv2))
+      if (client2.call(srv2))
       {
         msg.data = srv2.resp.data;
       }
       else
       {
+        // print_mtx.lock();
         std::cout << "error " << std::endl;
+        // print_mtx.unlock();
       }
-      std::cout << "publish test2:2:" << msg.data << std::endl;
+      // print_mtx.lock();
+      std::cout << "publish test2:" << msg.data << std::endl;
+      // print_mtx.unlock();
       //mh.publish<TestMsg>("test", msg);
       pub.publish(msg);
     }

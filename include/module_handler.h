@@ -72,6 +72,7 @@ public:
       if (!recv_msg_queue.empty())
       {
         MessageQueue::MessagePair pair = recv_msg_queue.front();
+        recv_msg_queue.pop();
         std::lock_guard<std::mutex>  lck(tcb_mtx);
         auto& funcs = topic_callbacks.at(pair.first);
         std::shared_ptr<Message> sMsg = pair.second;
@@ -82,7 +83,6 @@ public:
               fp.f(sMsg);
           }
         }
-        recv_msg_queue.pop();
       }
       else
       {
@@ -104,11 +104,11 @@ public:
       f(std::static_pointer_cast<T>(msg));
     };
 
-    //std::cout << typeid(packed_f).name() << std::endl;
+    //// std::cout << typeid(packed_f).name() << std::endl;
     size_t index;
+    tcb_mtx.lock();
     try
     {
-      std::lock_guard<std::mutex>  lck(tcb_mtx);
       auto& funcs = topic_callbacks.at(topic);
       function_pair fp = {packed_f, true};
       funcs.push_back(fp);
@@ -120,18 +120,17 @@ public:
       function_pair fp = {packed_f, true};
       funcs.push_back(fp);
       index = funcs.size() - 1;
-      std::lock_guard<std::mutex> lck(tcb_mtx);
       topic_callbacks.insert(
         std::pair<std::string, func_vector>(topic, funcs));
     }
-
+    tcb_mtx.unlock();
     Core::instance().subscribe(std::this_thread::get_id(), topic);
 
     auto shutdown_f = [this, index, topic]
     {
+      std::lock_guard<std::mutex>  lck(tcb_mtx);
       try
       {
-        std::lock_guard<std::mutex>  lck(tcb_mtx);
         auto &funcs = topic_callbacks.at(topic);
         //funcs.erase(funcs.begin() + index);
         funcs[index].enable = false;
@@ -139,7 +138,7 @@ public:
       catch (std::out_of_range e)
       {
         // do nothing.
-        std::cout << "no subscriber" << std::endl;
+        // std::cout << "no subscriber" << std::endl;
       }
     };
 
@@ -213,7 +212,7 @@ public:
 
     auto shutdown_f = [srv_name]
     {
-      std::cout << "succeed in down." << std::endl;
+      // std::cout << "succeed in down." << std::endl;
       auto return_false = [](std::shared_ptr<Service> srv)
       {
         return false;
@@ -248,7 +247,7 @@ public:
         }
         catch (...)
         {
-            std::cout << "get error....\n ";
+            // std::cout << "get error....\n ";
         }
       }
       else
@@ -278,7 +277,7 @@ public:
         }
         catch (...)
         {
-            std::cout << "get error....\n ";
+            // std::cout << "get error....\n ";
         }
       }
       else

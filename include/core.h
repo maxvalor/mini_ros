@@ -48,7 +48,7 @@ public:
     push_backs.insert(std::pair<std::thread::id,
       std::function<void(MessageQueue::MessagePair)>>(tid, f));
 
-    std::cout << "register_handler:" << tid << std::endl;
+    // std::cout << "register_handler:" << tid << std::endl;
   }
 
   void subscribe(std::thread::id tid, std::string topic)
@@ -76,13 +76,13 @@ public:
 
   void deliver(MessageQueue::MessagePair msg)
   {
+    std::lock_guard<std::mutex> lck(subscribers_mtx);
+    std::lock_guard<std::mutex> lck2(push_backs_mtx);
     try {
-      std::lock_guard<std::mutex> lck(subscribers_mtx);
       auto& tids = subscribers.at(msg.first);
       for (auto tid : tids)
       {
         try {
-          std::lock_guard<std::mutex> lck(push_backs_mtx);
           auto push_back = push_backs.at(tid);
           push_back(msg);
         }
@@ -92,7 +92,7 @@ public:
       }
     }
     catch (std::out_of_range e) {
-      std::cout << "no subscriber" << std::endl;
+      // std::cout << "no subscriber" << std::endl;
     }
   }
 
@@ -115,17 +115,19 @@ public:
   bool call_service(std::string srv_name,
     std::shared_ptr<Service> srv)
   {
+    bool found = false;
     try
     {
       services_mtx.lock();
       auto f = services.at(srv_name);
       services_mtx.unlock();
-      std::cout << "service found" << std::endl;
+      // std::cout << "service found" << std::endl;
       return f(srv);
     }
     catch (std::out_of_range e)
     {
-      std::cout << "no service" << std::endl;
+      // std::cout << "no service" << std::endl;
+      services_mtx.unlock();
     }
     return false;
   }
