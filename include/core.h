@@ -115,10 +115,11 @@ public:
   bool call_service(std::string srv_name,
     std::shared_ptr<Service> srv)
   {
-    std::lock_guard<std::mutex> lck(services_mtx);
     try
     {
-      auto& f = services.at(srv_name);
+      services_mtx.lock();
+      auto f = services.at(srv_name);
+      services_mtx.unlock();
       std::cout << "service found" << std::endl;
       return f(srv);
     }
