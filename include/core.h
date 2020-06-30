@@ -11,8 +11,6 @@
 
 namespace mini_ros {
 
-
-
 class Core {
 private:
   std::map<std::thread::id,
@@ -97,8 +95,16 @@ public:
   void register_service(std::string srv_name,
     std::function<bool(std::shared_ptr<Service>)> f)
   {
-    services.insert(std::pair<std::string,
-        std::function<bool(std::shared_ptr<Service>)>>(srv_name, f));
+    try
+    {
+      auto& f_n = services.at(srv_name);
+      f_n = f;
+    }
+    catch (std::out_of_range e)
+    {
+      services.insert(std::pair<std::string,
+          std::function<bool(std::shared_ptr<Service>)>>(srv_name, f));
+    }
   }
 
   bool call_service(std::string srv_name,

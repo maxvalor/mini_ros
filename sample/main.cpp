@@ -2,6 +2,7 @@
 #include "test_msg.h"
 #include "test_msg_2.h"
 #include "test_srv.h"
+#include "test_module.h"
 
 std::mutex print_mtx;
 
@@ -30,10 +31,13 @@ bool test_srv(std::shared_ptr<TestSrv> srv)
 }
 
 int main() {
+  mini_ros::init();
   mini_ros::ModuleHandler mh;
+  TestModule tm;
   std::thread pub_t_1([](){
     mini_ros::ModuleHandler mh;
     mini_ros::ServiceServer server = mh.advertiseService<TestSrv>("test_srv", test_srv, false);
+    server.shutdown();
     //mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
     //mh.spin();
     int i = 10;
@@ -58,7 +62,7 @@ int main() {
     mini_ros::ModuleHandler mh;
     //mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
     //mh.spin();
-    int i = 10000;
+    int i = 10;
     mini_ros::Publisher pub = mh.advertise<TestMsg2>("test2");
     mini_ros::ServiceClient client = mh.serviceClient<TestSrv>("test_srv", 10);
     mini_ros::ServiceClient client2 = mh.serviceClient<TestSrv>("test_srv", 10);
@@ -105,6 +109,7 @@ int main() {
   mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
   mini_ros::Subscriber sub2 = mh.subscribe<TestMsg>("test", on_msg1);
   mini_ros::Subscriber sub3 = mh.subscribe<TestMsg2>("test2", on_msg2);
+  //sub3.shutdown();
   //mini_ros::Subscriber sub4 = mh.subscribe<TestMsg2>("test2", on_msg2);
 
 

@@ -15,6 +15,10 @@
 
 namespace mini_ros {
 
+class ModuleHandler;
+
+using ThreadHandler = ModuleHandler;
+
 class ModuleHandler {
 private:
   struct function_pair {
@@ -207,20 +211,14 @@ public:
     //service_pair sp = {packed_f, true};
     Core::instance().register_service(srv_name, packed_f);
 
-    std::cout << "succeed in inserting." << service_funcs.size() << std::endl;
-
-    auto shutdown_f = [this, srv_name]
+    auto shutdown_f = [srv_name]
     {
-      // try
-      // {
-      //   auto &sp = service_funcs.at(srv_name);
-      //   //funcs.erase(funcs.begin() + index);
-      //   sp.enable = false;
-      // }
-      // catch (std::out_of_range e)
-      // {
-      //   // do nothing.
-      // }
+      std::cout << "succeed in down." << std::endl;
+      auto return_false = [](std::shared_ptr<Service> srv)
+      {
+        return false;
+      };
+      Core::instance().register_service(srv_name, return_false);
     };
 
     return ServiceServer(shutdown_f);
