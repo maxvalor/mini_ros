@@ -37,7 +37,7 @@ int main() {
   std::thread pub_t_1([](){
     mini_ros::ModuleHandler mh;
     mini_ros::ServiceServer server = mh.advertiseService<TestSrv>("test_srv", test_srv, false);
-    server.shutdown();
+    //server.shutdown();
     //mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
     //mh.spin();
     int i = 10;

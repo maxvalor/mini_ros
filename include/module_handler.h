@@ -27,11 +27,7 @@ private:
   };
   using func_vector = std::vector<function_pair>;
   std::map<std::string, func_vector> topic_callbacks;
-  struct service_pair {
-    std::function<bool(std::shared_ptr<Service>)> f;
-    bool enable;
-  };
-  std::map<std::string, service_pair> service_funcs;
+  std::mutex tcb_mtx;
 
   MessageQueue recv_msg_queue;
   MessageQueue send_msg_queue;
@@ -76,6 +72,7 @@ public:
       if (!recv_msg_queue.empty())
       {
         MessageQueue::MessagePair pair = recv_msg_queue.front();
+        std::lock_guard<std::mutex>  lck(tcb_mtx);
         auto& funcs = topic_callbacks.at(pair.first);
         std::shared_ptr<Message> sMsg = pair.second;
         for (auto fp : funcs)
@@ -111,6 +108,7 @@ public:
     size_t index;
     try
     {
+      std::lock_guard<std::mutex>  lck(tcb_mtx);
       auto& funcs = topic_callbacks.at(topic);
       function_pair fp = {packed_f, true};
       funcs.push_back(fp);
@@ -122,6 +120,7 @@ public:
       function_pair fp = {packed_f, true};
       funcs.push_back(fp);
       index = funcs.size() - 1;
+      std::lock_guard<std::mutex> lck(tcb_mtx);
       topic_callbacks.insert(
         std::pair<std::string, func_vector>(topic, funcs));
     }
@@ -132,6 +131,7 @@ public:
     {
       try
       {
+        std::lock_guard<std::mutex>  lck(tcb_mtx);
         auto &funcs = topic_callbacks.at(topic);
         //funcs.erase(funcs.begin() + index);
         funcs[index].enable = false;

@@ -20,7 +20,9 @@ private:
   std::map<std::string, std::function<bool(std::shared_ptr<Service>)>> services;
 
   static Core *singleton;
-  std::mutex rmtx;
+  std::mutex push_backs_mtx;
+  std::mutex subscribers_mtx;
+  std::mutex services_mtx;
 
   Core () {}
 public:
@@ -42,17 +44,17 @@ public:
   void register_handler(std::thread::id tid,
     std::function<void(MessageQueue::MessagePair)> f)
   {
-    rmtx.lock();
+    std::lock_guard<std::mutex> lck(push_backs_mtx);
     push_backs.insert(std::pair<std::thread::id,
       std::function<void(MessageQueue::MessagePair)>>(tid, f));
 
     std::cout << "register_handler:" << tid << std::endl;
-    rmtx.unlock();
   }
 
   void subscribe(std::thread::id tid, std::string topic)
   {
     size_t index;
+    std::lock_guard<std::mutex> lck(subscribers_mtx);
     try {
       auto& thread_ids = subscribers.at(topic);
       for (auto id : thread_ids)
@@ -75,10 +77,12 @@ public:
   void deliver(MessageQueue::MessagePair msg)
   {
     try {
+      std::lock_guard<std::mutex> lck(subscribers_mtx);
       auto& tids = subscribers.at(msg.first);
       for (auto tid : tids)
       {
         try {
+          std::lock_guard<std::mutex> lck(push_backs_mtx);
           auto push_back = push_backs.at(tid);
           push_back(msg);
         }
@@ -95,6 +99,7 @@ public:
   void register_service(std::string srv_name,
     std::function<bool(std::shared_ptr<Service>)> f)
   {
+    std::lock_guard<std::mutex> lck(services_mtx);
     try
     {
       auto& f_n = services.at(srv_name);
@@ -110,6 +115,7 @@ public:
   bool call_service(std::string srv_name,
     std::shared_ptr<Service> srv)
   {
+    std::lock_guard<std::mutex> lck(services_mtx);
     try
     {
       auto& f = services.at(srv_name);
