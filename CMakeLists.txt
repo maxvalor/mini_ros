@@ -5,8 +5,7 @@ project(mini_ros CXX)
 add_definitions(-std=c++11)
 
 include_directories(
-  sample
-  include
+  include/mini_ros
 )
 
 add_library(miniros SHARED
@@ -24,3 +23,5 @@ target_link_libraries(mini_ros_test
   pthread
   miniros
 )
+
+add_subdirectory(sample/pub_sub)

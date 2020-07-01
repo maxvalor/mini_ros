@@ -9,6 +9,8 @@ namespace mini_ros {
 class Module {
 
 public:
+  void wait();
+  void sleep(uint32_t ms);
   virtual void run() = 0;
 protected:
   ModuleHandler& getModuleHandler();
