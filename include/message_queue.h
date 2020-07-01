@@ -13,32 +13,12 @@ class MessageQueue {
 
 public:
   using MessagePair = std::pair<std::string, std::shared_ptr<Message>>;
-  MessagePair front() {
-    std::lock_guard<std::mutex> l(mtx);
-    return msg_queue.front();
-  }
-  void pop() {
-    std::lock_guard<std::mutex> l(mtx);
-    msg_queue.pop();
-  }
-  void push(MessagePair &msg) {
-    std::lock_guard<std::mutex> l(mtx);
-    msg_queue.push(msg);
-  }
-
-  bool empty() {
-    std::lock_guard<std::mutex> l(mtx);
-    return msg_queue.size() == 0;
-  }
-
-  void wait() {
-    std::unique_lock <std::mutex> lck(mtx2);
-    cv.wait(lck);
-  }
-
-  void notify() {
-    cv.notify_one();
-  }
+  MessagePair front();
+  void pop();
+  void push(MessagePair &msg);
+  bool empty();
+  void wait();
+  void notify();
 
 private:
   std::queue<MessagePair> msg_queue;

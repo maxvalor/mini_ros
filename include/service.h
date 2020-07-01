@@ -5,6 +5,7 @@ namespace mini_ros {
 
   struct Service {
     /* data */
+  protected:
     struct Request {} req;
     struct Response {} resp;
   };

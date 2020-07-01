@@ -7,19 +7,19 @@ namespace mini_ros {
 
 class ServiceClient {
 private:
-  std::function<bool(Service*)> f;
-  std::function<bool(std::shared_ptr<Service>)> f_sp;
+  std::function<bool(std::shared_ptr<Service>)> f;
 
+  friend class ThreadHandler;
+  ServiceClient(std::function<bool(std::shared_ptr<Service>)> f) : f(f) {}
 public:
-  ServiceClient(std::function<bool(Service*)> f,
-    std::function<bool(std::shared_ptr<Service>)> f_sp) : f(f), f_sp(f_sp) {}
-  ServiceClient() : f(nullptr), f_sp(nullptr) {}
+
+  ServiceClient() : f(nullptr) {}
   virtual ~ServiceClient () {}
 
   template <typename T>
   bool call(std::shared_ptr<T> srv) {
-    if (f_sp != nullptr ) {
-      return f_sp(srv);
+    if (f != nullptr ) {
+      return f(srv);
     }
 
     return false;
@@ -29,7 +29,11 @@ public:
   bool call(T& srv)
   {
     if (f != nullptr ) {
-      return f(dynamic_cast<Service*>(&srv));
+      bool rlt = false;
+      std::shared_ptr<T> sSrv(new T(std::move(srv)));
+      rlt = f(sSrv);
+      srv.resp = sSrv->resp;
+      return rlt;
     }
 
     return false;

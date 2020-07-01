@@ -7,9 +7,10 @@ namespace mini_ros {
 
 class Subscriber {
   std::function<void(void)> f;
-  
-public:
+
+  friend class ThreadHandler;
   Subscriber(std::function<void(void)> f) : f(f) {}
+public:
   Subscriber() : f(nullptr) {}
   void shutdown() {
     if (f != nullptr ) {

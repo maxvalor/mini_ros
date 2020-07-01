@@ -27,113 +27,21 @@ private:
   Core () {}
 public:
 
-  static Core& instance() {
-    static std::mutex mtx;
-    if (singleton == nullptr) {
-      mtx.lock();
-      if (singleton == nullptr) {
-        singleton = new Core();
-      }
-      mtx.unlock();
-    }
-
-    return *singleton;
-  }
+  static Core& instance();
   virtual ~Core () {}
 
   void register_handler(std::thread::id tid,
-    std::function<void(MessageQueue::MessagePair)> f)
-  {
-    std::lock_guard<std::mutex> lck(push_backs_mtx);
-    push_backs.insert(std::pair<std::thread::id,
-      std::function<void(MessageQueue::MessagePair)>>(tid, f));
+    std::function<void(MessageQueue::MessagePair)> f);
 
-    // std::cout << "register_handler:" << tid << std::endl;
-  }
+  void subscribe(std::thread::id tid, std::string topic);
 
-  void subscribe(std::thread::id tid, std::string topic)
-  {
-    size_t index;
-    std::lock_guard<std::mutex> lck(subscribers_mtx);
-    try {
-      auto& thread_ids = subscribers.at(topic);
-      for (auto id : thread_ids)
-      {
-        if (id == tid)
-        {
-          return;
-        }
-      }
-      thread_ids.push_back(tid);
-    }
-    catch (std::out_of_range e) {
-      std::list<std::thread::id> thread_ids;
-      thread_ids.push_back(tid);
-      subscribers.insert(
-        std::pair<std::string, std::list<std::thread::id>>(topic, thread_ids));
-    }
-  }
-
-  void deliver(MessageQueue::MessagePair msg)
-  {
-    std::lock_guard<std::mutex> lck(subscribers_mtx);
-    std::lock_guard<std::mutex> lck2(push_backs_mtx);
-    try {
-      auto& tids = subscribers.at(msg.first);
-      for (auto tid : tids)
-      {
-        try {
-          auto push_back = push_backs.at(tid);
-          push_back(msg);
-        }
-        catch (std::out_of_range e) {
-          // do nothing
-        }
-      }
-    }
-    catch (std::out_of_range e) {
-      // std::cout << "no subscriber" << std::endl;
-    }
-  }
+  void deliver(MessageQueue::MessagePair msg);
 
   void register_service(std::string srv_name,
-    std::function<bool(std::shared_ptr<Service>)> f)
-  {
-    std::lock_guard<std::mutex> lck(services_mtx);
-    try
-    {
-      auto& f_n = services.at(srv_name);
-      f_n = f;
-    }
-    catch (std::out_of_range e)
-    {
-      services.insert(std::pair<std::string,
-          std::function<bool(std::shared_ptr<Service>)>>(srv_name, f));
-    }
-  }
+    std::function<bool(std::shared_ptr<Service>)> f);
 
-  bool call_service(std::string srv_name,
-    std::shared_ptr<Service> srv)
-  {
-    bool found = false;
-    try
-    {
-      services_mtx.lock();
-      auto f = services.at(srv_name);
-      services_mtx.unlock();
-      // std::cout << "service found" << std::endl;
-      return f(srv);
-    }
-    catch (std::out_of_range e)
-    {
-      // std::cout << "no service" << std::endl;
-      services_mtx.unlock();
-    }
-    return false;
-  }
+  bool call_service(std::string srv_name, std::shared_ptr<Service> srv);
 };
-
-Core* Core::singleton = nullptr;
 
 } /* mini_ros */
 #endif

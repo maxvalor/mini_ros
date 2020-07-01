@@ -7,8 +7,10 @@ class ServiceServer {
 private:
   std::function<void(void)> f;
 
-public:
+  friend class ThreadHandler;
   ServiceServer(std::function<void(void)> f) : f(f) {}
+public:
+
   ServiceServer() : f(nullptr) {}
   virtual ~ServiceServer () {}
   void shutdown() {

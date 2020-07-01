@@ -32,10 +32,10 @@ bool test_srv(std::shared_ptr<TestSrv> srv)
 
 int main() {
   mini_ros::init();
-  mini_ros::ModuleHandler mh;
+  mini_ros::ThreadHandler mh;
   TestModule tm;
   std::thread pub_t_1([](){
-    mini_ros::ModuleHandler mh;
+    mini_ros::ThreadHandler mh;
     mini_ros::ServiceServer server = mh.advertiseService<TestSrv>("test_srv", test_srv, false);
     //server.shutdown();
     //mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
@@ -59,7 +59,7 @@ int main() {
   });
 
   std::thread pub_t_2([](){
-    mini_ros::ModuleHandler mh;
+    mini_ros::ThreadHandler mh;
     //mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
     //mh.spin();
     int i = 10;
@@ -110,7 +110,7 @@ int main() {
   });
 
   std::thread t2([]{
-    mini_ros::ModuleHandler mh;
+    mini_ros::ThreadHandler mh;
     mini_ros::Subscriber sub = mh.subscribe<TestMsg>("test", on_msg);
     mh.spin();
   });

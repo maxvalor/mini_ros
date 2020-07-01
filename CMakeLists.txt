@@ -9,10 +9,18 @@ include_directories(
   include
 )
 
-add_executable(mini_ros_sample
-  sample/main.cpp
+add_library(miniros SHARED
+  src/core.cpp
+  src/message_queue.cpp
+  src/module.cpp
+  src/thread_handler.cpp
 )
 
-target_link_libraries(mini_ros_sample
+add_executable(mini_ros_test
+  test/main.cpp
+)
+
+target_link_libraries(mini_ros_test
   pthread
+  miniros
 )
