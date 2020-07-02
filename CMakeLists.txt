@@ -15,14 +15,10 @@ add_library(miniros SHARED
   src/thread_handler.cpp
 )
 
-add_executable(mini_ros_test
-  test/main.cpp
-)
-
-target_link_libraries(mini_ros_test
+target_link_libraries(miniros
   pthread
-  miniros
 )
 
 add_subdirectory(sample/pub_sub)
 add_subdirectory(sample/srv_call)
+add_subdirectory(sample/threadhandler)
