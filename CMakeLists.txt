@@ -13,6 +13,7 @@ add_library(miniros SHARED
   src/message_queue.cpp
   src/module.cpp
   src/thread_handler.cpp
+  src/convenient.cpp
 )
 
 target_link_libraries(miniros
