@@ -16,7 +16,7 @@ void stop(int signo)
     _exit(0);
 }
 
-bool hold(size_t count, ...)
+void hold(size_t count, ...)
 {
   va_list ap;
   va_start(ap, count);

@@ -4,7 +4,7 @@
 namespace mini_ros {
 
 void init();
-bool hold(size_t count, ...);
+void hold(size_t count, ...);
 
 } /* mini_ros */
 
