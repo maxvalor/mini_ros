@@ -1,7 +1,7 @@
 #ifndef SERVER_MODULE_H_
 #define SERVER_MODULE_H_
 
-#include "mini_ros/mini_ros.h"
+#include <mini_ros/mini_ros.h>
 #include "sample_srv.h"
 
 class ServerModule : public mini_ros::Module {

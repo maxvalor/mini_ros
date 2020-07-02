@@ -19,6 +19,4 @@ target_link_libraries(miniros
   pthread
 )
 
-add_subdirectory(sample/pub_sub)
-add_subdirectory(sample/srv_call)
-add_subdirectory(sample/threadhandler)
+include(cmake/sample.cmake)

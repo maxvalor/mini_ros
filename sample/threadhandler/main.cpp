@@ -1,4 +1,4 @@
-#include "mini_ros/mini_ros.h"
+#include <mini_ros/mini_ros.h>
 #include "sample_msg.h"
 
 void onMsg(std::shared_ptr<SampleMsg> msg)
@@ -43,6 +43,6 @@ int main()
 
   pub_t.join();
   sub_t.join();
-  
+
   return 0;
 }
