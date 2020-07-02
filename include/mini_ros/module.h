@@ -10,8 +10,10 @@ class Module {
 
 public:
   void wait();
+  void stop();
   void sleep(uint32_t ms);
-  virtual void run() = 0;
+  virtual void onInit() = 0;
+  virtual void onExit();
 protected:
   ModuleHandler& getModuleHandler();
 

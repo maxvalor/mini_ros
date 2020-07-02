@@ -7,8 +7,9 @@ namespace mini_ros {
     _t = std::thread([this]()
     {
       handler = new ModuleHandler();
-      run();
+      onInit();
       handler->spin();
+      onExit();
     });
   }
 
@@ -19,13 +20,16 @@ namespace mini_ros {
 
   void Module::sleep(uint32_t ms)
   {
-    if (std::this_thread::get_id() != _t.get_id())
-    {
-      return;
-    }
-
+    assert(std::this_thread::get_id() == _t.get_id());
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
   }
+
+  void Module::stop()
+  {
+    handler->stop();
+  }
+
+  void Module::onExit() {}
 
   Module::~Module()
   {

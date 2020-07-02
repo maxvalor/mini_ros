@@ -17,7 +17,7 @@ public:
     std::cout << "receive data:" << msg->data[0] << std::endl;
   }
 
-  void run() override
+  void onInit() override
   {
     mini_ros::Subscriber sub =
       getModuleHandler().subscribe<SampleMsg>("sample_topic",

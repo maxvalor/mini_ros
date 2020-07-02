@@ -1,9 +1,9 @@
-#ifndef TEST_SRV_H_
-#define TEST_SRV_H_
+#ifndef SAMPLE_SRV_H_
+#define SAMPLE_SRV_H_
 
 #include "service.h"
 
-struct TestSrv : public mini_ros::Service
+struct SampleSrv : public mini_ros::Service
 {
   struct Request : public mini_ros::Service::Request
   {

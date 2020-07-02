@@ -8,23 +8,64 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 namespace mini_ros {
-
-void __mini_ros_stop(int signo)
-{
-    _exit(0);
-}
 
 struct init
 {
   void operator()()
   {
     Core::instance();
-
-    signal(SIGINT, __mini_ros_stop);
   }
 };
+
+void __mini_ros_stop(int signo)
+{
+    _exit(0);
+}
+
+bool hold(size_t count, ...)
+{
+  va_list ap;
+  va_start(ap, count);
+
+  signal(SIGINT, __mini_ros_stop);
+
+  for (int i = 0; i < count; ++i) {
+    Module *pModule = va_arg(ap, Module*);
+    pModule->wait();
+  }
+
+  va_end(ap);
+
+  return true;
+}
+
+// struct hold
+// {
+//   bool operator() (size_t count, ...)
+//   {
+//     va_list ap;
+//     va_start(ap, count);
+//
+//     signal(SIGINT, __mini_ros_stop);
+//
+//     for (int i = 0; i < count; ++i) {
+//       Module *pModule = va_arg(ap, Module*);
+//       modules.push_back(pModule);
+//     }
+//
+//     for (auto module : modules)
+//     {
+//       module->wait();
+//     }
+//
+//     va_end(ap);
+//
+//     return true;
+//   }
+// };
 
 
 

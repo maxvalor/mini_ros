@@ -25,3 +25,4 @@ target_link_libraries(mini_ros_test
 )
 
 add_subdirectory(sample/pub_sub)
+add_subdirectory(sample/srv_call)

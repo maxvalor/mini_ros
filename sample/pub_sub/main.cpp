@@ -8,7 +8,6 @@ int main()
   mini_ros::init();
   PubModule pm;
   SubModule sm;
-  pm.wait();
-  sm.wait();
+  mini_ros::hold(2, &pm, &sm);
   return 0;
 }
