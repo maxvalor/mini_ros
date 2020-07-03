@@ -1,13 +1,11 @@
 #ifndef CORE_H_
 #define CORE_H_
 
-#include <thread>
 #include <map>
 #include <list>
+#include <thread>
 #include "message_queue.h"
 #include "service.h"
-
-#include <iostream>
 
 namespace mini_ros {
 

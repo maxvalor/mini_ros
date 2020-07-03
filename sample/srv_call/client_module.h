@@ -1,7 +1,8 @@
 #ifndef CLIENT_MODULE_H_
 #define CLIENT_MODULE_H_
 
-#include <mini_ros/mini_ros.h>
+#include <mini_ros/module.h>
+#include <iostream>
 #include "sample_srv.h"
 
 class ClientModule : public mini_ros::Module {

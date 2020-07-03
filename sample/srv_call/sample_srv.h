@@ -1,7 +1,7 @@
 #ifndef SAMPLE_SRV_H_
 #define SAMPLE_SRV_H_
 
-#include "service.h"
+#include <mini_ros/service.h>
 
 struct SampleSrv : public mini_ros::Service
 {

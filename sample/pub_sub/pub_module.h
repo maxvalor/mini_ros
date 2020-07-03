@@ -2,6 +2,7 @@
 #define PUB_MODULE_H_
 
 #include <mini_ros/module.h>
+#include <iostream>
 #include "sample_msg.h"
 
 class PubModule : public mini_ros::Module {

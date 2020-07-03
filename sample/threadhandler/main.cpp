@@ -1,4 +1,5 @@
 #include <mini_ros/mini_ros.h>
+#include <iostream>
 #include "sample_msg.h"
 
 void onMsg(std::shared_ptr<SampleMsg> msg)

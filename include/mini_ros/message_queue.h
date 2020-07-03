@@ -2,7 +2,6 @@
 #define MESSAGE_QUEUE_H_
 
 #include <queue>
-#include <memory>
 #include <condition_variable>
 #include <mutex>
 #include "message.h"
@@ -12,6 +11,8 @@ namespace mini_ros {
 class MessageQueue {
 
 public:
+  MessageQueue() : max_size(0) {}
+  MessageQueue(size_t max_size);
   using MessagePair = std::pair<std::string, std::shared_ptr<Message>>;
   MessagePair front();
   void pop();
@@ -24,7 +25,8 @@ private:
   std::queue<MessagePair> msg_queue;
   std::condition_variable cv;
   std::mutex mtx;
-  std::mutex mtx2;
+  std::mutex mtx_cv;
+  size_t max_size;
 };
 }
 #endif

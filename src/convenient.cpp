@@ -29,8 +29,6 @@ void hold(size_t count, ...)
   }
 
   va_end(ap);
-
-  return true;
 }
 
 } /* mini_ros */

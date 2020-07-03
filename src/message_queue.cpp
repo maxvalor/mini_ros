@@ -1,6 +1,11 @@
 #include "message_queue.h"
+#include <memory>
 
 namespace mini_ros {
+
+  MessageQueue::MessageQueue(size_t max_size) : max_size(max_size)
+  {
+  }
 
   MessageQueue::MessagePair MessageQueue::front() {
     std::lock_guard<std::mutex> l(mtx);
@@ -12,7 +17,16 @@ namespace mini_ros {
   }
   void MessageQueue::push(MessagePair &msg) {
     std::lock_guard<std::mutex> l(mtx);
-    msg_queue.push(msg);
+    // to make it faster
+    if (max_size == 0 || msg_queue.size() + 1 <= max_size)
+    {
+      msg_queue.push(msg);
+    }
+    else
+    {
+      msg_queue.pop();
+      msg_queue.push(msg);
+    }
   }
 
   bool MessageQueue::empty() {
@@ -21,7 +35,7 @@ namespace mini_ros {
   }
 
   void MessageQueue::wait() {
-    std::unique_lock <std::mutex> lck(mtx2);
+    std::unique_lock <std::mutex> lck(mtx_cv);
     cv.wait(lck);
   }
 

@@ -1,7 +1,7 @@
 #ifndef SAMPLE_MSG_H_
 #define SAMPLE_MSG_H_
 
-#include <mini_ros/mini_ros.h>
+#include <mini_ros/message.h>
 #include "sample_msg.h"
 
 struct SampleMsg : public mini_ros::Message {

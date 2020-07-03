@@ -14,7 +14,6 @@ public:
   ServiceServer() : f(nullptr) {}
   virtual ~ServiceServer () {}
   void shutdown() {
-    std::cout << "succeed in down." << std::endl;
     if (f != nullptr ) {
       f();
     }
