@@ -15,8 +15,13 @@ public:
 
   bool onCalled(std::shared_ptr<SampleSrv> srv)
   {
+<<<<<<< HEAD
     std::cout << "receive request:" << srv->req.data << std::endl;
     srv->resp.data = srv->req.data + 100;
+=======
+    std::cout << "receive request:" << srv->req << std::endl;
+    srv->resp = srv->req + 100;
+>>>>>>> dev
     return true;
   }
 
