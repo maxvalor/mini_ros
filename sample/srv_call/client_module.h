@@ -22,17 +22,10 @@ public:
       while (--i)
       {
         SampleSrv srv;
-<<<<<<< HEAD
-        srv.req.data = i;
-        if (client.call(srv))
-        {
-          std::cout << "call service by object, service return:" << srv.resp.data << std::endl;
-=======
         srv.req = i;
         if (client.call(srv))
         {
           std::cout << "call service by object, service return:" << srv.resp<< std::endl;
->>>>>>> dev
         }
         else
         {
@@ -40,17 +33,10 @@ public:
         }
 
         std::shared_ptr<SampleSrv> pSrv = std::make_shared<SampleSrv>();
-<<<<<<< HEAD
-        pSrv->req.data = i;
-        if (client.call(pSrv))
-        {
-          std::cout << "call service by shared pointer, service return:" << pSrv->resp.data << std::endl;
-=======
         pSrv->req= i;
         if (client.call(pSrv))
         {
           std::cout << "call service by shared pointer, service return:" << pSrv->resp<< std::endl;
->>>>>>> dev
         }
         else
         {
