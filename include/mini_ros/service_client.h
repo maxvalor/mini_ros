@@ -2,6 +2,7 @@
 #define SERVICE_CLIENT_H_
 
 #include "service.h"
+#include <memory.h>
 
 namespace mini_ros {
 
@@ -20,20 +21,6 @@ public:
   bool call(std::shared_ptr<T> srv) {
     if (f != nullptr ) {
       return f(srv, typeid(T).name());
-    }
-
-    return false;
-  }
-
-  template <typename T>
-  bool call(T& srv)
-  {
-    if (f != nullptr ) {
-      bool rlt = false;
-      std::shared_ptr<T> sSrv(new T(std::move(srv)));
-      rlt = f(sSrv, typeid(T).name());
-      srv.resp = sSrv->resp;
-      return rlt;
     }
 
     return false;

@@ -21,18 +21,7 @@ public:
       int i = 10;
       while (--i)
       {
-        SampleSrv srv;
-        srv.req = i;
-        if (client.call(srv))
-        {
-          std::cout << "call service by object, service return:" << srv.resp<< std::endl;
-        }
-        else
-        {
-          std::cout << "error " << std::endl;
-        }
-
-        std::shared_ptr<SampleSrv> pSrv = std::make_shared<SampleSrv>();
+        auto pSrv = std::make_shared<SampleSrv>();
         pSrv->req= i;
         if (client.call(pSrv))
         {
