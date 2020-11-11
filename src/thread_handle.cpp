@@ -108,7 +108,7 @@ namespace mini_ros {
       {
         auto &funcs = topic_callbacks.at(topic);
         auto to_shutdown = funcs.begin();
-        for (int i = 0; i < index; ++i)
+        for (size_t i = 0; i < index; ++i)
         {
           ++to_shutdown;
         }

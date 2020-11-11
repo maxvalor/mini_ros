@@ -27,7 +27,6 @@ namespace mini_ros {
 
   void Core::subscribe(std::thread::id tid, std::string topic)
   {
-    size_t index;
     std::lock_guard<std::mutex> lck(subscribers_mtx);
     try {
       auto& thread_ids = subscribers.at(topic);
@@ -88,7 +87,6 @@ namespace mini_ros {
   bool Core::call_service(std::string srv_name,
     std::shared_ptr<Service> srv)
   {
-    bool found = false;
     try
     {
       services_mtx.lock();
