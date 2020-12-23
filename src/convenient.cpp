@@ -54,7 +54,7 @@ void __hold(size_t count, ...)
 
   MainThreadProcessor::instance().processEvent();
 
-  for (int i = 0; i < count; ++i)
+  for (size_t i = 0; i < count; ++i)
   {
     std::cout << count << std::endl;
     Module *pModule = va_arg(ap, Module*);
