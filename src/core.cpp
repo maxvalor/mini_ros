@@ -20,8 +20,8 @@ namespace mini_ros {
   void Core::register_handle(std::thread::id tid,
     std::function<void(MessagePair)> f)
   {
-    std::lock_guard<std::mutex> lck(push_backs_mtx);
-    push_backs.insert(std::pair<std::thread::id,
+    std::lock_guard<std::mutex> lck(emplaces_mtx);
+    emplaces.insert(std::pair<std::thread::id,
       std::function<void(MessagePair)>>(tid, f));
   }
 
@@ -38,11 +38,11 @@ namespace mini_ros {
           return;
         }
       }
-      thread_ids.push_back(tid);
+      thread_ids.emplace_back(tid);
     }
     catch (std::out_of_range e) {
       std::list<std::thread::id> thread_ids;
-      thread_ids.push_back(tid);
+      thread_ids.emplace_back(tid);
       subscribers.insert(
         std::pair<std::string, std::list<std::thread::id>>(topic, thread_ids));
     }
@@ -51,14 +51,14 @@ namespace mini_ros {
   void Core::deliver(MessagePair msg)
   {
     std::lock_guard<std::mutex> lck(subscribers_mtx);
-    std::lock_guard<std::mutex> lck2(push_backs_mtx);
+    std::lock_guard<std::mutex> lck2(emplaces_mtx);
     try {
       auto& tids = subscribers.at(msg.first);
       for (auto tid : tids)
       {
         try {
-          auto push_back = push_backs.at(tid);
-          push_back(msg);
+          auto emplace = emplaces.at(tid);
+          emplace(msg);
         }
         catch (std::out_of_range e) {
           // do nothing

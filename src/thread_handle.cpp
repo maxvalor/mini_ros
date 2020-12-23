@@ -21,12 +21,12 @@ namespace mini_ros {
     deliver_t.detach();
 
     tid = std::this_thread::get_id();
-    auto push_back = [this](MessagePair msg)
+    auto emplace = [this](MessagePair msg)
     {
-      recv_msg_queue.push(msg);
+      recv_msg_queue.emplace(msg);
       recv_msg_queue.notify();
     };
-    Core::instance().register_handle(tid, push_back);
+    Core::instance().register_handle(tid, emplace);
   }
 
   ThreadHandle::~ThreadHandle () {}
@@ -87,14 +87,14 @@ namespace mini_ros {
       }
 
       function_pair fp = {f, true};
-      funcs.push_back(fp);
+      funcs.emplace_back(fp);
       index = funcs.size() - 1;
     }
     catch (std::out_of_range e)
     {
       func_vector funcs;
       function_pair fp = {f, true};
-      funcs.push_back(fp);
+      funcs.emplace_back(fp);
       index = funcs.size() - 1;
       topic_callbacks.insert(
         std::pair<std::string, func_vector>(topic, funcs));
@@ -129,7 +129,7 @@ namespace mini_ros {
       {
         assert(tname == msg_tname);
         MessagePair p(topic, msg);
-        send_msg_queue.push(p);
+        send_msg_queue.emplace(p);
         send_msg_queue.notify();
       };
 

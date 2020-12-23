@@ -18,18 +18,18 @@ public:
     std::lock_guard<std::mutex> l(mtx);
     return msg_queue.front();
   }
-  void push(T &msg)
+  void emplace(T &msg)
   {
     std::lock_guard<std::mutex> l(mtx);
     // to make it faster
     if (max_size == 0 || msg_queue.size() + 1 <= max_size)
     {
-      msg_queue.push(msg);
+      msg_queue.emplace(msg);
     }
     else
     {
       msg_queue.pop();
-      msg_queue.push(msg);
+      msg_queue.emplace(msg);
     }
   }
   MultiThreadQueue(size_t max_size) : max_size(max_size)

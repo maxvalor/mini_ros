@@ -12,13 +12,13 @@ namespace mini_ros {
 class Core {
 private:
   std::map<std::thread::id,
-    std::function<void(MessagePair)>> push_backs;
+    std::function<void(MessagePair)>> emplaces;
 
   std::map<std::string, std::list<std::thread::id>> subscribers;
   std::map<std::string, std::function<bool(std::shared_ptr<Service>)>> services;
 
   static Core *singleton;
-  std::mutex push_backs_mtx;
+  std::mutex emplaces_mtx;
   std::mutex subscribers_mtx;
   std::mutex services_mtx;
 

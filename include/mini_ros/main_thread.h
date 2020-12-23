@@ -53,7 +53,7 @@ namespace mini_ros {
 
     void addEvent(MainThreadEventSP& event)
     {
-      event_queue.push(event);
+      event_queue.emplace(event);
       event_queue.notify();
     }
 
