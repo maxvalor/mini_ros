@@ -1,6 +1,7 @@
 #ifndef MAIN_THREAD_H_
 #define MAIN_THREAD_H_
 
+#include <functional>
 #include "multithread_queue.h"
 
 namespace mini_ros {

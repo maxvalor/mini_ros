@@ -4,6 +4,7 @@
 #include <map>
 #include <list>
 #include <thread>
+#include <functional>
 #include "message_queue.h"
 #include "service.h"
 
