@@ -34,7 +34,7 @@ public:
       std::cout << "publish by shared pointer, data:" << spMsg->data[0] << std::endl;
       pub.publish(spMsg);
 
-      sleep(100);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
 
