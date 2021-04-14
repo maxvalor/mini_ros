@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(mini_ros VERSION 1.0)
+project(mini_ros)
 
 add_definitions(-std=c++11)
 
